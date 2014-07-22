@@ -9,7 +9,11 @@ import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+import org.jivesoftware.smackx.ping.PingManager;
+import org.jivesoftware.smackx.receipts.DeliveryReceipt;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptRequest;
 
 import java.util.concurrent.Callable;
 
@@ -52,7 +56,6 @@ public class ConnectTask implements Runnable {
         configuration.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
         configuration.setDebuggerEnabled(true);
         configuration.setReconnectionAllowed(true);
-
 
         XMPPConnection connection = new XMPPTCPConnection(configuration);
         connection.addConnectionListener(connectionListener);

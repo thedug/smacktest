@@ -9,10 +9,13 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.famigo.rawsmacktest.app.view.DrawView;
 import com.famigo.rawsmacktest.app.view.StrokeEvent;
 import com.famigo.rawsmacktest.app.xmpp.ConnectTask;
+import com.famigo.rawsmacktest.app.xmpp.FailedCommandEvent;
+import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
 import com.famigo.rawsmacktest.app.xmpp.XMPPService;
 import com.famigo.rawsmacktest.app.xmpp.command.SendMessageCommand;
 import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
@@ -97,6 +100,14 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
         StrokeEvent strokeEvent = gson.fromJson(incommingMessage.getMessage().getBody(), StrokeEvent.class);
         drawView.addRemoteEvent(strokeEvent);
 
+    }
+
+    @Subscribe
+    public void onCmdFailed(FailedCommandEvent event){
+        XMPPCommand cmd = event.command;
+        Toast.makeText(this,
+                String.format("Cmd failed, type: %s id: %s", cmd.getClass().getSimpleName(), cmd.getId()),
+                Toast.LENGTH_SHORT ).show();
     }
 
     @Override

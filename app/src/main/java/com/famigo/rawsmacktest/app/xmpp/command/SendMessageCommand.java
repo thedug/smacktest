@@ -7,6 +7,7 @@ import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
 
 /**
  * Created by adam.fitzgerald on 7/21/14.
@@ -23,9 +24,15 @@ public class SendMessageCommand extends XMPPCommand{
     @Override
     protected void executeCommand(XMPPConnection activeConnection) {
         try {
+            DeliveryReceiptManager.addDeliveryReceiptRequest(message);
             activeConnection.sendPacket(message);
         } catch (SmackException.NotConnectedException e) {
             Log.e(TAG, "cannot send message", e);
         }
+    }
+
+    @Override
+    public String getId() {
+        return message.getPacketID();
     }
 }

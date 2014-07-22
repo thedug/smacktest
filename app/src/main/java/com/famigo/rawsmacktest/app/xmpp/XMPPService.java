@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.famigo.rawsmacktest.app.BusProvider;
@@ -21,15 +22,14 @@ import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
-import org.jivesoftware.smackx.offline.OfflineMessageManager;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
+import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -37,18 +37,19 @@ import java.util.concurrent.ThreadFactory;
 /**
  * Created by adam.fitzgerald on 7/21/14.
  */
-public class XMPPService extends Service implements ConnectionListener, PacketListener {
+public class XMPPService extends Service implements ConnectionListener, PacketListener, ICommandContext, ReceiptReceivedListener {
 
     private static final String USER = "luser";
     private static final String PASS = "passwd";
     private static final String TAG = XMPPService.class.getSimpleName();
+    private static final long CHECK_DELAY = 10000;
 
     private XMPPConnection activeConnection = null;
 
     private Handler handler = new Handler();
     private Notification notification;
-
-    private List<XMPPCommand> stalledCommands = new LinkedList<XMPPCommand>();
+    
+    private Map<String, XMPPCommand> outStandingCommands = new ConcurrentHashMap<String, XMPPCommand>();
 
     public static void start(Context ctx, String username, String password){
         ctx.startService(
@@ -86,8 +87,20 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
         startForeground(0xBADCAFE, notification);
 
+        watchOutstandingCommands();
+
         return Service.START_REDELIVER_INTENT;
 
+    }
+
+    @Override
+    public void watchOutstandingCommands() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                executor.submit( new OutstandingCheckTask(XMPPService.this) );
+            }
+        }, CHECK_DELAY /2);
     }
 
     @Override
@@ -126,31 +139,9 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
         xmppConnection.addPacketListener(this, new MessageTypeFilter(Message.Type.chat));
         postOnMain(XMPPStatusEvent.AUTHENTICATED);
 
-        OfflineMessageManager offlineMessageManager = new OfflineMessageManager(activeConnection);
-        try {
-            Log.e(TAG, "Supported " + offlineMessageManager.supportsFlexibleRetrieval());
-            for (Message message : offlineMessageManager.getMessages()) {
-                processPacket(message);
-            }
-        } catch (SmackException e) {
-            Log.e(TAG, e.getMessage(), e);
-        } catch (XMPPException.XMPPErrorException e) {
-            Log.e(TAG, e.getMessage(), e);
-        }
+        DeliveryReceiptManager.getInstanceFor(activeConnection).enableAutoReceipts();
+        DeliveryReceiptManager.getInstanceFor(activeConnection).addReceiptReceivedListener(this);
 
-        if ( stalledCommands.size() > 0 ){
-
-            Iterator<XMPPCommand> iter = stalledCommands.iterator();
-            while( iter.hasNext() ) {
-                Log.i(TAG, String.format("size %d", stalledCommands.size()));
-                XMPPCommand command = iter.next();
-                if ( !activeConnection.isConnected() ){
-                    break;
-                }
-                onCommand(command);
-                iter.remove();
-            }
-        }
     }
 
     @Override
@@ -187,17 +178,14 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     public void onCommand(XMPPCommand command){
         if ( activeConnection != null ){
             if ( activeConnection.isConnected() && activeConnection.isAuthenticated() ) {
-                command.applyConnection(activeConnection);
+                command.initialize(this);
                 executor.submit(command);
-            } else {
-                stalledCommands.add(command);
             }
-        } else {
-            stalledCommands.add(command);
         }
     }
 
-    private void postOnMain(final Object event) {
+    @Override
+    public void postOnMain(final Object event) {
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -209,5 +197,26 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     @Override
     public void processPacket(Packet packet) throws SmackException.NotConnectedException {
         postOnMain(new IncommingMessage((Message) packet));
+    }
+
+    @Override
+    public XMPPConnection getActiveConnection() {
+        return activeConnection;
+    }
+
+    @Override
+    public void addOutstandingCommand(XMPPCommand command) {
+        command.expiration = SystemClock.uptimeMillis()+ CHECK_DELAY;
+        outStandingCommands.put(command.getId(), command);
+    }
+
+    @Override
+    public Map<String, XMPPCommand> getOutStandingCommands() {
+        return outStandingCommands;
+    }
+
+    @Override
+    public void onReceiptReceived(String arg0, String arg1, String receiptId){
+        outStandingCommands.remove(receiptId);
     }
 }
