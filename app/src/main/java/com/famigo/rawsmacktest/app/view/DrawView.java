@@ -11,6 +11,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -124,6 +126,14 @@ public class DrawView extends View {
 
     public void addRemoteEvent(StrokeEvent strokeEvent) {
         remoteStroke.add(strokeEvent);
+
+        Collections.sort( remoteStroke, new Comparator<StrokeEvent>() {
+            @Override
+            public int compare(StrokeEvent lhs, StrokeEvent rhs) {
+                return lhs.index-rhs.index;
+            }
+        });
+
         invalidate();
     }
 

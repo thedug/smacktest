@@ -28,7 +28,11 @@ import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
 import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,14 +46,26 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     private static final String USER = "luser";
     private static final String PASS = "passwd";
     private static final String TAG = XMPPService.class.getSimpleName();
+
     private static final long CHECK_DELAY = 10000;
+    private static final int MAX_HISTORY = 1000;
+
 
     private XMPPConnection activeConnection = null;
 
     private Handler handler = new Handler();
+    private RetryManager retryManager;
+
     private Notification notification;
     
     private Map<String, XMPPCommand> outStandingCommands = new ConcurrentHashMap<String, XMPPCommand>();
+
+    private Set<String> servicedPackets = Collections.synchronizedSet(Collections.newSetFromMap(new LinkedHashMap<String, Boolean>(){
+        @Override
+        protected boolean removeEldestEntry(Entry<String, Boolean> eldest) {
+            return this.size() > MAX_HISTORY;
+        }
+    }));
 
     public static void start(Context ctx, String username, String password){
         ctx.startService(
@@ -59,7 +75,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     }
 
     private ExecutorService executor = Executors.newFixedThreadPool(
-            Runtime.getRuntime().availableProcessors()*2,
+            Runtime.getRuntime().availableProcessors()*4,
             new ThreadFactory() {
         public int count = 0;
 
@@ -106,6 +122,8 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     @Override
     public void onCreate() {
         BusProvider.getBus().register(this);
+        retryManager = new RetryManager(handler);
+        retryManager.run();
         super.onCreate();
     }
 
@@ -120,6 +138,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
             BusProvider.getBus().post(XMPPStatusEvent.UNINITIALIZED);
             super.onDestroy();
         }
+        retryManager.shutdown();
     }
 
     @Override
@@ -196,7 +215,10 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     @Override
     public void processPacket(Packet packet) throws SmackException.NotConnectedException {
-        postOnMain(new IncommingMessage((Message) packet));
+        if ( !servicedPackets.contains(packet.getPacketID())) {
+            servicedPackets.add(packet.getPacketID());
+            postOnMain(new IncommingMessage((Message) packet));
+        }
     }
 
     @Override
@@ -218,5 +240,6 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     @Override
     public void onReceiptReceived(String arg0, String arg1, String receiptId){
         outStandingCommands.remove(receiptId);
+        retryManager.removeLateBloomer(receiptId);
     }
 }

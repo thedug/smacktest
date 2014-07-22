@@ -14,7 +14,7 @@ public abstract class XMPPCommand implements Runnable{
     public long expiration;
     private String id;
 
-    protected abstract void executeCommand(XMPPConnection activeConnection);
+    public abstract void executeCommand(XMPPConnection activeConnection);
     public abstract String getId();
 
     public void initialize(ICommandContext context) {

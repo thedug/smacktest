@@ -3,6 +3,8 @@ package com.famigo.rawsmacktest.app.xmpp;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.famigo.rawsmacktest.app.xmpp.event.FailedCommandEvent;
+
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.Map;

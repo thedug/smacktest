@@ -5,16 +5,16 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.famigo.rawsmacktest.app.view.DrawView;
 import com.famigo.rawsmacktest.app.view.StrokeEvent;
 import com.famigo.rawsmacktest.app.xmpp.ConnectTask;
-import com.famigo.rawsmacktest.app.xmpp.FailedCommandEvent;
+import com.famigo.rawsmacktest.app.xmpp.RetryManager;
+import com.famigo.rawsmacktest.app.xmpp.command.RetryCommand;
+import com.famigo.rawsmacktest.app.xmpp.event.FailedCommandEvent;
 import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
 import com.famigo.rawsmacktest.app.xmpp.XMPPService;
 import com.famigo.rawsmacktest.app.xmpp.command.SendMessageCommand;
@@ -105,14 +105,22 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
     @Subscribe
     public void onCmdFailed(FailedCommandEvent event){
         XMPPCommand cmd = event.command;
-        Toast.makeText(this,
-                String.format("Cmd failed, type: %s id: %s", cmd.getClass().getSimpleName(), cmd.getId()),
-                Toast.LENGTH_SHORT ).show();
+
+        if ( cmd instanceof RetryCommand ) {
+            RetryCommand retry = (RetryCommand)cmd;
+
+            if ( retry.tries < RetryManager.MAX_RETRIES ){
+                return;
+            }
+
+            Toast.makeText(this,
+                    String.format("Cmd failed, type: %s id: %s", cmd.getClass().getSimpleName(), cmd.getId()),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;

@@ -22,8 +22,9 @@ public class SendMessageCommand extends XMPPCommand{
     }
 
     @Override
-    protected void executeCommand(XMPPConnection activeConnection) {
+    public void executeCommand(XMPPConnection activeConnection) {
         try {
+
             DeliveryReceiptManager.addDeliveryReceiptRequest(message);
             activeConnection.sendPacket(message);
         } catch (SmackException.NotConnectedException e) {
