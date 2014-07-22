@@ -195,12 +195,8 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     @Subscribe
     public void onCommand(XMPPCommand command){
-        if ( activeConnection != null ){
-            if ( activeConnection.isConnected() && activeConnection.isAuthenticated() ) {
-                command.initialize(this);
-                executor.submit(command);
-            }
-        }
+        command.initialize(this);
+        executor.submit(command);
     }
 
     @Override
