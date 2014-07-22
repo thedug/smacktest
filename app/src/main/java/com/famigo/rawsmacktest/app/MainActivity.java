@@ -109,7 +109,7 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
         if ( cmd instanceof RetryCommand ) {
             RetryCommand retry = (RetryCommand)cmd;
 
-            if ( retry.tries < RetryManager.MAX_RETRIES ){
+            if ( retry.tries != RetryManager.MAX_RETRIES ){
                 return;
             }
 

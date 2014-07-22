@@ -43,10 +43,10 @@ public class RetryManager implements Runnable{
             retryCommand = new RetryCommand(event.command);
         }
 
-        retryCommand.tries++;
         retryCommand.retryAfter = SystemClock.uptimeMillis() + BASE_DELAY * retryCommand.tries;
+        retryCommand.tries++;
 
-        if ( retryCommand.tries < MAX_RETRIES ){
+        if ( retryCommand.tries <= MAX_RETRIES ){
             retriesOutstanding.put(retryCommand.getId(), retryCommand);
         }
 
