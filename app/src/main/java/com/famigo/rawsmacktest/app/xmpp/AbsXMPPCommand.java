@@ -7,22 +7,22 @@ import java.lang.ref.WeakReference;
 /**
  * Created by adam.fitzgerald on 7/21/14.
  */
-public abstract class XMPPCommand implements Runnable{
+public abstract class AbsXMPPCommand implements Runnable{
 
-    private WeakReference<IXMPPContext> weakCommandContext;
-    public long expiration;
+    private WeakReference<IXMPPContext> mWeakCommandContext;
+    public long mExpiration;
 
     public abstract void executeCommand(XMPPConnection activeConnection);
     public abstract String getId();
 
     public void initialize(IXMPPContext context) {
-        weakCommandContext = new WeakReference<IXMPPContext>(context);
+        mWeakCommandContext = new WeakReference<IXMPPContext>(context);
     }
 
     @Override
     public void run() {
-        IXMPPContext ctx = weakCommandContext.get();
-        XMPPConnection activeConnection = ctx.getActiveConnection();
+        IXMPPContext ctx = mWeakCommandContext.get();
+        XMPPConnection activeConnection = ctx.getmActiveConnection();
         if ( activeConnection != null && activeConnection.isConnected() && activeConnection.isAuthenticated() ){
             executeCommand(activeConnection);
         }

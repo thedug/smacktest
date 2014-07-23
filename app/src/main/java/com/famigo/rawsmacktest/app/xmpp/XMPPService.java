@@ -44,7 +44,7 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
     private static final long CHECK_DELAY = 10000;
     private static final int MAX_HISTORY = 1000;
 
-    private final PacketHandler[] packetHandlers = {new ChatMessageHandler(this)};
+    private final AbsPacketHandler[] mPacketHandlers = {new ChatMessageHandler(this)};
 
     public static void start(Context ctx, String username, String password){
         ctx.startService(
@@ -53,30 +53,30 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
                         .putExtra(PASS, password));
     }
 
-    private XMPPConnection activeConnection = null;
+    private XMPPConnection mActiveConnection = null;
 
-    private Handler handler = new Handler();
-    private RetryManager retryManager;
+    private Handler mHandler = new Handler();
+    private RetryManager mRetryManager;
 
-    private Notification notification;
+    private Notification mNotification;
     
-    private Map<String, XMPPCommand> outStandingCommands = new ConcurrentHashMap<String, XMPPCommand>();
+    private Map<String, AbsXMPPCommand> mOutStandingCommands = new ConcurrentHashMap<String, AbsXMPPCommand>();
 
-    private Set<String> servicedPackets = Collections.synchronizedSet(Collections.newSetFromMap(new LinkedHashMap<String, Boolean>(){
+    private Set<String> mServicedPackets = Collections.synchronizedSet(Collections.newSetFromMap(new LinkedHashMap<String, Boolean>(){
         @Override
         protected boolean removeEldestEntry(Entry<String, Boolean> eldest) {
             return this.size() > MAX_HISTORY;
         }
     }));
 
-    private Runnable outStandingKickoffRunnable = new Runnable() {
+    private Runnable mOutStandingKickoffRunnable = new Runnable() {
         @Override
         public void run() {
-            executor.submit( new OutstandingCheckTask(XMPPService.this) );
+            mExecutor.submit(new OutstandingCheckTask(XMPPService.this));
         }
     };
 
-    private ExecutorService executor = Executors.newFixedThreadPool(
+    private ExecutorService mExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors()*4,
             new ThreadFactory() {
         public int count = 0;
@@ -94,16 +94,16 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
         String user = intent.getStringExtra(USER);
         String pass = intent.getStringExtra(PASS);
 
-        executor.submit(new ConnectTask(user, pass, this, activeConnection));
+        mExecutor.submit(new ConnectTask(user, pass, this, mActiveConnection));
 
-        notification = new Notification.Builder(this)
+        mNotification = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle("XMPP active")
                 .setContentText("XMPP client service is active and killin' yo battery")
                 .setContentIntent( PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0) )
                 .build();
 
-        startForeground(0xBADCAFE, notification);
+        startForeground(0xBADCAFE, mNotification);
 
         watchOutstandingCommands();
 
@@ -113,29 +113,29 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
 
     @Override
     public void watchOutstandingCommands() {
-        handler.postDelayed( outStandingKickoffRunnable, CHECK_DELAY /2);
+        mHandler.postDelayed(mOutStandingKickoffRunnable, CHECK_DELAY / 2);
     }
 
     @Override
-    public Collection<String> getServicedPackets() {
-        return servicedPackets;
+    public Collection<String> getmServicedPackets() {
+        return mServicedPackets;
     }
 
     @Override
     public void onCreate() {
-        BusProvider.getBus().register(this);
-        retryManager = new RetryManager(handler);
-        retryManager.run();
+        BusProvider.getmBus().register(this);
+        mRetryManager = new RetryManager(mHandler);
+        mRetryManager.run();
         super.onCreate();
     }
 
     @Override
     public void onDestroy() {
-        BusProvider.getBus().unregister(this);
-        BusProvider.getBus().post(XMPPStatusEvent.UNINITIALIZED);
+        BusProvider.getmBus().unregister(this);
+        BusProvider.getmBus().post(XMPPStatusEvent.UNINITIALIZED);
 
-        handler.removeCallbacks(outStandingKickoffRunnable);
-        retryManager.shutdown();
+        mHandler.removeCallbacks(mOutStandingKickoffRunnable);
+        mRetryManager.shutdown();
 
         super.onDestroy();
     }
@@ -147,37 +147,37 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
 
     @Override
     public void connected(XMPPConnection xmppConnection) {
-        activeConnection = xmppConnection;
+        mActiveConnection = xmppConnection;
         postOnMain(XMPPStatusEvent.CONNECTED);
     }
 
     @Override
     public void authenticated(XMPPConnection xmppConnection) {
-        activeConnection = xmppConnection;
+        mActiveConnection = xmppConnection;
         attachPacketHandlers();
         postOnMain(XMPPStatusEvent.AUTHENTICATED);
 
-        DeliveryReceiptManager.getInstanceFor(activeConnection).enableAutoReceipts();
-        DeliveryReceiptManager.getInstanceFor(activeConnection).addReceiptReceivedListener(this);
+        DeliveryReceiptManager.getInstanceFor(mActiveConnection).enableAutoReceipts();
+        DeliveryReceiptManager.getInstanceFor(mActiveConnection).addReceiptReceivedListener(this);
 
     }
 
     private void attachPacketHandlers() {
-        for ( PacketHandler ph: packetHandlers ) {
-            activeConnection.addPacketListener(ph, ph.getFilter());
+        for ( AbsPacketHandler ph: mPacketHandlers) {
+            mActiveConnection.addPacketListener(ph, ph.getFilter());
         }
     }
 
     private void detachPacketHandlers() {
-        for ( PacketHandler ph: packetHandlers ) {
-            activeConnection.removePacketListener(ph);
+        for ( AbsPacketHandler ph: mPacketHandlers) {
+            mActiveConnection.removePacketListener(ph);
         }
     }
 
     @Override
     public void connectionClosed() {
         detachPacketHandlers();
-        activeConnection = null;
+        mActiveConnection = null;
         postOnMain(XMPPStatusEvent.CONNECTION_CLOSED);
         this.stopSelf();
     }
@@ -185,7 +185,7 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
     @Override
     public void connectionClosedOnError(Exception e) {
         detachPacketHandlers();
-        activeConnection = null;
+        mActiveConnection = null;
         postOnMain(XMPPStatusEvent.CONNECTION_CLOSED_ERROR);
     }
 
@@ -201,45 +201,45 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
 
     @Override
     public void reconnectionFailed(Exception e) {
-        activeConnection = null;
+        mActiveConnection = null;
         postOnMain(XMPPStatusEvent.RECONNECT_FAILED);
     }
 
     @Subscribe
-    public void onCommand(XMPPCommand command){
+    public void onCommand(AbsXMPPCommand command){
         command.initialize(this);
-        executor.submit(command);
+        mExecutor.submit(command);
     }
 
     @Override
     public void postOnMain(final Object event) {
-        handler.post(new Runnable() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
-                BusProvider.getBus().post(event);
+                BusProvider.getmBus().post(event);
             }
         });
     }
 
     @Override
-    public XMPPConnection getActiveConnection() {
-        return activeConnection;
+    public XMPPConnection getmActiveConnection() {
+        return mActiveConnection;
     }
 
     @Override
-    public void addOutstandingCommand(XMPPCommand command) {
-        command.expiration = SystemClock.uptimeMillis()+ CHECK_DELAY;
-        outStandingCommands.put(command.getId(), command);
+    public void addOutstandingCommand(AbsXMPPCommand command) {
+        command.mExpiration = SystemClock.uptimeMillis()+ CHECK_DELAY;
+        mOutStandingCommands.put(command.getId(), command);
     }
 
     @Override
-    public Map<String, XMPPCommand> getOutStandingCommands() {
-        return outStandingCommands;
+    public Map<String, AbsXMPPCommand> getmOutStandingCommands() {
+        return mOutStandingCommands;
     }
 
     @Override
     public void onReceiptReceived(String arg0, String arg1, String receiptId){
-        outStandingCommands.remove(receiptId);
-        retryManager.removeLateBloomer(receiptId);
+        mOutStandingCommands.remove(receiptId);
+        mRetryManager.removeLateBloomer(receiptId);
     }
 }

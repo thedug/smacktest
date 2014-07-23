@@ -8,13 +8,13 @@ import com.squareup.otto.ThreadEnforcer;
  */
 public class BusProvider {
 
-    private static Bus bus = new Bus(ThreadEnforcer.MAIN);
+    private static Bus mBus = new Bus(ThreadEnforcer.MAIN);
 
     static {
-        bus.register(new XMPPStatusProducer());
+        mBus.register(new XMPPStatusProducer());
     }
 
-    public static Bus getBus() {
-        return bus;
+    public static Bus getmBus() {
+        return mBus;
     }
 }

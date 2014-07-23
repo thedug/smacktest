@@ -3,7 +3,6 @@ package com.famigo.rawsmacktest.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,12 +10,12 @@ import android.widget.Toast;
 
 import com.famigo.rawsmacktest.app.view.DrawView;
 import com.famigo.rawsmacktest.app.view.StrokeEvent;
+import com.famigo.rawsmacktest.app.xmpp.AbsXMPPCommand;
 import com.famigo.rawsmacktest.app.xmpp.ConnectTask;
 import com.famigo.rawsmacktest.app.xmpp.RetryManager;
 import com.famigo.rawsmacktest.app.xmpp.command.RetryCommand;
 import com.famigo.rawsmacktest.app.xmpp.command.ShutdownCommand;
 import com.famigo.rawsmacktest.app.xmpp.event.FailedCommandEvent;
-import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
 import com.famigo.rawsmacktest.app.xmpp.XMPPService;
 import com.famigo.rawsmacktest.app.xmpp.command.SendMessageCommand;
 import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
@@ -68,20 +67,20 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
     @Override
     protected void onResume() {
         super.onResume();
-        BusProvider.getBus().register(this);
+        BusProvider.getmBus().register(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        BusProvider.getBus().unregister(this);
+        BusProvider.getmBus().unregister(this);
     }
 
     @Override
     public boolean onOptionsItemSelected (MenuItem item){
            switch (item.getItemId()){
                case R.id.disconnect:
-                   BusProvider.getBus().post(new ShutdownCommand());
+                   BusProvider.getmBus().post(new ShutdownCommand());
                    return true;
            }
         return false;
@@ -98,19 +97,19 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
 
     @Subscribe
     public void onMessage( IncommingMessage incommingMessage ){
-        StrokeEvent strokeEvent = gson.fromJson(incommingMessage.getMessage().getBody(), StrokeEvent.class);
+        StrokeEvent strokeEvent = gson.fromJson(incommingMessage.getmMessage().getBody(), StrokeEvent.class);
         drawView.addRemoteEvent(strokeEvent);
 
     }
 
     @Subscribe
     public void onCmdFailed(FailedCommandEvent event){
-        XMPPCommand cmd = event.command;
+        AbsXMPPCommand cmd = event.mCommand;
 
         if ( cmd instanceof RetryCommand ) {
             RetryCommand retry = (RetryCommand)cmd;
 
-            if ( retry.tries != RetryManager.MAX_RETRIES ){
+            if ( retry.mTries != RetryManager.MAX_RETRIES ){
                 return;
             }
 
@@ -131,6 +130,6 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
     public void newStrokeEvent(StrokeEvent strokeEvent) {
         Message message = new Message(to, Message.Type.chat);
         message.setBody(gson.toJson(strokeEvent));
-        BusProvider.getBus().post(new SendMessageCommand(message));
+        BusProvider.getmBus().post(new SendMessageCommand(message));
     }
 }

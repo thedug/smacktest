@@ -12,17 +12,17 @@ import com.squareup.otto.Subscribe;
 public class XMPPStatusProducer {
 
     private static final String TAG = XMPPStatusProducer.class.getSimpleName();
-    XMPPStatusEvent lastEvent = XMPPStatusEvent.UNINITIALIZED;
+    XMPPStatusEvent mLastEvent = XMPPStatusEvent.UNINITIALIZED;
 
     @Subscribe
     public void onUpdate( XMPPStatusEvent event ){
-        Log.i(TAG, String.format("transition from: %s to: %s", lastEvent.name(), event));
-        lastEvent = event;
+        Log.i(TAG, String.format("transition from: %s to: %s", mLastEvent.name(), event));
+        mLastEvent = event;
     }
 
     @Produce
     public XMPPStatusEvent produceEvent(){
-        return lastEvent;
+        return mLastEvent;
     }
 
 

@@ -1,30 +1,30 @@
 package com.famigo.rawsmacktest.app.xmpp.command;
 
-import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
+import com.famigo.rawsmacktest.app.xmpp.AbsXMPPCommand;
 
 import org.jivesoftware.smack.XMPPConnection;
 
 /**
  * Created by adam.fitzgerald on 7/22/14.
  */
-public class RetryCommand extends XMPPCommand{
+public class RetryCommand extends AbsXMPPCommand {
 
-    private final XMPPCommand originalCommand;
+    private final AbsXMPPCommand mOriginalCommand;
 
-    public int tries = 0;
-    public long retryAfter;
+    public int mTries = 0;
+    public long mRetryAfter;
 
-    public RetryCommand(XMPPCommand command) {
-        this.originalCommand = command;
+    public RetryCommand(AbsXMPPCommand command) {
+        this.mOriginalCommand = command;
     }
 
     @Override
     public void executeCommand(XMPPConnection activeConnection) {
-        originalCommand.executeCommand(activeConnection);
+        mOriginalCommand.executeCommand(activeConnection);
     }
 
     @Override
     public String getId() {
-        return originalCommand.getId();
+        return mOriginalCommand.getId();
     }
 }

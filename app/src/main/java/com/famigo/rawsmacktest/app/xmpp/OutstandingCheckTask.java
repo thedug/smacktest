@@ -16,22 +16,22 @@ public class OutstandingCheckTask implements  Runnable {
 
     private static final String TAG = OutstandingCheckTask.class.getSimpleName();
 
-    private final WeakReference<IXMPPContext> weakCommandContext;
+    private final WeakReference<IXMPPContext> mWeakCommandContext;
 
     public OutstandingCheckTask(IXMPPContext ctx) {
-        weakCommandContext = new WeakReference<IXMPPContext>(ctx);
+        mWeakCommandContext = new WeakReference<IXMPPContext>(ctx);
     }
 
     @Override
     public void run() {
-        IXMPPContext ctx = weakCommandContext.get();
+        IXMPPContext ctx = mWeakCommandContext.get();
         if( ctx != null ){
             Log.i(TAG, "checking out standing commands");
-            Iterator<Map.Entry<String, XMPPCommand>> iter = ctx.getOutStandingCommands().entrySet().iterator();
+            Iterator<Map.Entry<String, AbsXMPPCommand>> iter = ctx.getmOutStandingCommands().entrySet().iterator();
             long nao = SystemClock.uptimeMillis();
             while( iter.hasNext() ){
-                XMPPCommand cmd = iter.next().getValue();
-                if ( cmd.expiration <= nao ){
+                AbsXMPPCommand cmd = iter.next().getValue();
+                if ( cmd.mExpiration <= nao ){
                     iter.remove();
                     ctx.postOnMain(new FailedCommandEvent(cmd));
                 }

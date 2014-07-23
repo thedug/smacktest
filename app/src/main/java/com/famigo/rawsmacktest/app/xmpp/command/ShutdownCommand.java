@@ -2,14 +2,14 @@ package com.famigo.rawsmacktest.app.xmpp.command;
 
 import android.util.Log;
 
-import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
+import com.famigo.rawsmacktest.app.xmpp.AbsXMPPCommand;
 
 import org.jivesoftware.smack.XMPPConnection;
 
 /**
  * Created by adam.fitzgerald on 7/23/14.
  */
-public class ShutdownCommand extends XMPPCommand {
+public class ShutdownCommand extends AbsXMPPCommand {
 
     private static final String TAG = ShutdownCommand.class.getSimpleName();
 

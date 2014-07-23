@@ -10,23 +10,23 @@ import java.util.Collection;
 /**
  * Created by adam.fitzgerald on 7/23/14.
  */
-public abstract class PacketHandler implements PacketListener {
+public abstract class AbsPacketHandler implements PacketListener {
 
-    protected IXMPPContext ctx;
+    protected IXMPPContext mCtx;
 
     public abstract PacketFilter getFilter();
-    public abstract XMPPEvent handlePacket(Packet packet);
+    public abstract IXMPPEvent handlePacket(Packet packet);
 
-    public PacketHandler(IXMPPContext context) {
-        ctx = context;
+    public AbsPacketHandler(IXMPPContext context) {
+        mCtx = context;
     }
 
     @Override
     public void processPacket(Packet packet) throws SmackException.NotConnectedException {
-        Collection<String> servicedPackets = ctx.getServicedPackets();
+        Collection<String> servicedPackets = mCtx.getmServicedPackets();
         if ( !servicedPackets.contains(packet.getPacketID())) {
             servicedPackets.add(packet.getPacketID());
-            ctx.postOnMain(handlePacket(packet));
+            mCtx.postOnMain(handlePacket(packet));
         }
     }
 
