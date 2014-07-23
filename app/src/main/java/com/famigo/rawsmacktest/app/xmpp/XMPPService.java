@@ -50,6 +50,12 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     private static final long CHECK_DELAY = 10000;
     private static final int MAX_HISTORY = 1000;
 
+    public static void start(Context ctx, String username, String password){
+        ctx.startService(
+                new Intent(ctx, XMPPService.class)
+                        .putExtra(USER, username)
+                        .putExtra(PASS, password));
+    }
 
     private XMPPConnection activeConnection = null;
 
@@ -73,13 +79,6 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
             executor.submit( new OutstandingCheckTask(XMPPService.this) );
         }
     };
-
-    public static void start(Context ctx, String username, String password){
-        ctx.startService(
-                new Intent(ctx, XMPPService.class)
-                        .putExtra(USER, username)
-                        .putExtra(PASS, password));
-    }
 
     private ExecutorService executor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors()*4,

@@ -10,9 +10,22 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    buildTypes {
+    signingConfigs {
         release {
+            storeFile file("../../famigo_mkt_key")
+            storePassword "famigo&716180"
+            keyAlias "android market key"
+            keyPassword "famigo&716180"
+        }
+    }
+    buildTypes {
+        debug {
             runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+        release {
+            runProguard true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
