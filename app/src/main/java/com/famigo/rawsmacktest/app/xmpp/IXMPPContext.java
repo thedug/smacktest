@@ -9,14 +9,14 @@ import java.util.Collection;
  */
 public interface IXMPPContext {
 
-    public XMPPConnection getmActiveConnection();
+    public XMPPConnection getActiveConnection();
     public void addOutstandingCommand( AbsXMPPCommand command );
 
-    java.util.Map<String, AbsXMPPCommand> getmOutStandingCommands();
+    java.util.Map<String, AbsXMPPCommand> getOutStandingCommands();
 
     public void postOnMain(final Object event);
 
     public void watchOutstandingCommands();
 
-    Collection<String> getmServicedPackets();
+    Collection<String> getServicedPackets();
 }

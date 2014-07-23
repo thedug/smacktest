@@ -27,4 +27,8 @@ public class RetryCommand extends AbsXMPPCommand {
     public String getId() {
         return mOriginalCommand.getId();
     }
+
+    public Object getOriginalCommand() {
+        return mOriginalCommand;
+    }
 }

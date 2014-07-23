@@ -27,7 +27,7 @@ public class OutstandingCheckTask implements  Runnable {
         IXMPPContext ctx = mWeakCommandContext.get();
         if( ctx != null ){
             Log.i(TAG, "checking out standing commands");
-            Iterator<Map.Entry<String, AbsXMPPCommand>> iter = ctx.getmOutStandingCommands().entrySet().iterator();
+            Iterator<Map.Entry<String, AbsXMPPCommand>> iter = ctx.getOutStandingCommands().entrySet().iterator();
             long nao = SystemClock.uptimeMillis();
             while( iter.hasNext() ){
                 AbsXMPPCommand cmd = iter.next().getValue();

@@ -3,7 +3,7 @@ package com.famigo.rawsmacktest.app.xmpp.packet_handler;
 import com.famigo.rawsmacktest.app.xmpp.AbsPacketHandler;
 import com.famigo.rawsmacktest.app.xmpp.IXMPPContext;
 import com.famigo.rawsmacktest.app.xmpp.IXMPPEvent;
-import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
+import com.famigo.rawsmacktest.app.xmpp.event.IncomingMessage;
 
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
@@ -26,7 +26,7 @@ public class ChatMessageHandler extends AbsPacketHandler {
 
     @Override
     public IXMPPEvent handlePacket(Packet packet) {
-        return new IncommingMessage((Message) packet);
+        return new IncomingMessage((Message) packet);
     }
 
 

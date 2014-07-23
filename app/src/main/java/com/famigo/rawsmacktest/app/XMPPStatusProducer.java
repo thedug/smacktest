@@ -8,6 +8,10 @@ import com.squareup.otto.Subscribe;
 
 /**
  * Created by adam.fitzgerald on 7/21/14.
+ *
+ * Keeps track of the current status of the XMPP service
+ * and provides it on registration of interested parties to the bus
+ *
  */
 public class XMPPStatusProducer {
 

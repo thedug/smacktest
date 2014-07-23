@@ -7,15 +7,15 @@ import org.jivesoftware.smack.packet.Message;
 /**
  * Created by adam.fitzgerald on 7/21/14.
  */
-public class IncommingMessage implements IXMPPEvent {
+public class IncomingMessage implements IXMPPEvent {
 
     private Message mMessage;
 
-    public IncommingMessage(Message message) {
+    public IncomingMessage(Message message) {
         this.mMessage = message;
     }
 
-    public Message getmMessage() {
+    public Message getMessage() {
         return mMessage;
     }
 }

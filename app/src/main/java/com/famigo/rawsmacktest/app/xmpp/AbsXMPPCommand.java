@@ -22,7 +22,7 @@ public abstract class AbsXMPPCommand implements Runnable{
     @Override
     public void run() {
         IXMPPContext ctx = mWeakCommandContext.get();
-        XMPPConnection activeConnection = ctx.getmActiveConnection();
+        XMPPConnection activeConnection = ctx.getActiveConnection();
         if ( activeConnection != null && activeConnection.isConnected() && activeConnection.isAuthenticated() ){
             executeCommand(activeConnection);
         }

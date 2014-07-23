@@ -21,6 +21,9 @@ public class RetryManager implements Runnable{
 
     private static final String TAG = RetryManager.class.getSimpleName();
     public static final int MAX_RETRIES = 3;
+    /**
+     * delay to back off subsequent retries
+     */
     private static final int BASE_DELAY = 10000;
 
     private final WeakReference<Handler> mWeakHandler;
@@ -30,7 +33,7 @@ public class RetryManager implements Runnable{
     public RetryManager(Handler handler){
         this.mWeakHandler = new WeakReference<Handler>(handler);
 
-        BusProvider.getmBus().register(this);
+        BusProvider.getBus().register(this);
 
     }
 
@@ -63,7 +66,7 @@ public class RetryManager implements Runnable{
         while (iter.hasNext()) {
             RetryCommand cmd = iter.next().getValue();
             if (cmd.mRetryAfter <= SystemClock.uptimeMillis()) {
-                BusProvider.getmBus().post(cmd);
+                BusProvider.getBus().post(cmd);
                 iter.remove();
             }
         }
@@ -79,7 +82,7 @@ public class RetryManager implements Runnable{
         if ( handler != null ) {
             handler.removeCallbacks(this);
         }
-        BusProvider.getmBus().unregister(this);
+        BusProvider.getBus().unregister(this);
         mRetriesOutstanding.clear();
     }
 }

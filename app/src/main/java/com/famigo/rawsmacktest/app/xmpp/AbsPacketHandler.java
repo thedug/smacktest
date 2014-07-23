@@ -23,7 +23,7 @@ public abstract class AbsPacketHandler implements PacketListener {
 
     @Override
     public void processPacket(Packet packet) throws SmackException.NotConnectedException {
-        Collection<String> servicedPackets = mCtx.getmServicedPackets();
+        Collection<String> servicedPackets = mCtx.getServicedPackets();
         if ( !servicedPackets.contains(packet.getPacketID())) {
             servicedPackets.add(packet.getPacketID());
             mCtx.postOnMain(handlePacket(packet));

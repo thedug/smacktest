@@ -41,9 +41,20 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
     private static final String PASS = "passwd";
     private static final String TAG = XMPPService.class.getSimpleName();
 
+    /**
+     * Delay between sending a packet and calling it failed and ready for retry
+     */
     private static final long CHECK_DELAY = 10000;
+    /**
+     * number of recently packets we keep so that we can detect duplicate packets
+     */
     private static final int MAX_HISTORY = 1000;
 
+    /*
+     * EXTENSION NOTE:
+     * if you need to handle more packet types create a
+     * new AbsPacketHandler implementation for it and add it here
+     */
     private final AbsPacketHandler[] mPacketHandlers = {new ChatMessageHandler(this)};
 
     public static void start(Context ctx, String username, String password){
@@ -117,22 +128,26 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
     }
 
     @Override
-    public Collection<String> getmServicedPackets() {
+    public Collection<String> getServicedPackets() {
         return mServicedPackets;
     }
 
     @Override
     public void onCreate() {
-        BusProvider.getmBus().register(this);
+        BusProvider.getBus().register(this);
         mRetryManager = new RetryManager(mHandler);
+        /*
+         * USAGE NOTE:
+         * comment out to disable retry
+         */
         mRetryManager.run();
         super.onCreate();
     }
 
     @Override
     public void onDestroy() {
-        BusProvider.getmBus().unregister(this);
-        BusProvider.getmBus().post(XMPPStatusEvent.UNINITIALIZED);
+        BusProvider.getBus().unregister(this);
+        BusProvider.getBus().post(XMPPStatusEvent.UNINITIALIZED);
 
         mHandler.removeCallbacks(mOutStandingKickoffRunnable);
         mRetryManager.shutdown();
@@ -216,13 +231,13 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                BusProvider.getmBus().post(event);
+                BusProvider.getBus().post(event);
             }
         });
     }
 
     @Override
-    public XMPPConnection getmActiveConnection() {
+    public XMPPConnection getActiveConnection() {
         return mActiveConnection;
     }
 
@@ -233,7 +248,7 @@ public class XMPPService extends Service implements ConnectionListener, IXMPPCon
     }
 
     @Override
-    public Map<String, AbsXMPPCommand> getmOutStandingCommands() {
+    public Map<String, AbsXMPPCommand> getOutStandingCommands() {
         return mOutStandingCommands;
     }
 

@@ -18,7 +18,7 @@ import com.famigo.rawsmacktest.app.xmpp.command.ShutdownCommand;
 import com.famigo.rawsmacktest.app.xmpp.event.FailedCommandEvent;
 import com.famigo.rawsmacktest.app.xmpp.XMPPService;
 import com.famigo.rawsmacktest.app.xmpp.command.SendMessageCommand;
-import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
+import com.famigo.rawsmacktest.app.xmpp.event.IncomingMessage;
 import com.famigo.rawsmacktest.app.xmpp.event.XMPPStatusEvent;
 import com.google.gson.Gson;
 import com.squareup.otto.Subscribe;
@@ -50,14 +50,18 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         to = "user2@" + ConnectTask.VHOST;
-                        XMPPService.start(getApplicationContext(),"user1", "user1");
+                        /*
+                         * USAGE NOTE:
+                         * this is how to start the service!
+                         */
+                        XMPPService.start(getApplicationContext(), "user1", "user1");
                     }
                 })
                 .setNegativeButton("user2", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         to = "user1@" + ConnectTask.VHOST;
-                        XMPPService.start(getApplicationContext(),"user2", "user2");
+                        XMPPService.start(getApplicationContext(), "user2", "user2");
                     }
                 })
                 .create();
@@ -67,25 +71,38 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
     @Override
     protected void onResume() {
         super.onResume();
-        BusProvider.getmBus().register(this);
+        BusProvider.getBus().register(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        BusProvider.getmBus().unregister(this);
+        BusProvider.getBus().unregister(this);
     }
 
     @Override
     public boolean onOptionsItemSelected (MenuItem item){
            switch (item.getItemId()){
                case R.id.disconnect:
-                   BusProvider.getmBus().post(new ShutdownCommand());
+                   /*
+                    * USAGE NOTE:
+                    * this is how to shut the service down.
+                    * stopService will work but will pepper the log with
+                    * exceptions as it will be unable to do it in the
+                    * most graceful manner
+                    */
+                   BusProvider.getBus().post(new ShutdownCommand());
                    return true;
            }
         return false;
     }
 
+    /*
+     * USAGE NOTE:
+     * this is how updates to the status of the XMPP
+     * service are received
+     *
+     */
     @Subscribe
     public void onXMPPStatusUpdate( XMPPStatusEvent event ){
         if ( event == XMPPStatusEvent.UNINITIALIZED ){
@@ -95,13 +112,31 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
         }
     }
 
+    /*
+     * USAGE NOTE:
+     * This is how incoming messages are received
+     *
+     */
     @Subscribe
-    public void onMessage( IncommingMessage incommingMessage ){
-        StrokeEvent strokeEvent = gson.fromJson(incommingMessage.getmMessage().getBody(), StrokeEvent.class);
+    public void onMessage( IncomingMessage incomingMessage){
+        StrokeEvent strokeEvent = gson.fromJson(incomingMessage.getMessage().getBody(), StrokeEvent.class);
         drawView.addRemoteEvent(strokeEvent);
 
     }
 
+    /*
+     * USAGE NOTE:
+     * This is how the UI is notified of a command failure
+     *
+     * On first failure the type of event.mCommand will match the original commands.
+     * As it is retried and subsequently fails, event.mCommand will come in as type RetryCommand.
+     *
+     * If needed the original command can be accessed via getOriginalCommand on the RetryCommand object.
+     *
+     * When retry.mTries == RetryManager.MAX_RETRIES the system has finally given up on this command
+     * and will no longer be retried.
+     *
+     */
     @Subscribe
     public void onCmdFailed(FailedCommandEvent event){
         AbsXMPPCommand cmd = event.mCommand;
@@ -112,6 +147,8 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
             if ( retry.mTries != RetryManager.MAX_RETRIES ){
                 return;
             }
+
+            retry.getOriginalCommand();
 
             Toast.makeText(this,
                     String.format("Cmd failed, type: %s id: %s", cmd.getClass().getSimpleName(), cmd.getId()),
@@ -128,8 +165,12 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
 
     @Override
     public void newStrokeEvent(StrokeEvent strokeEvent) {
+        /*
+         * USAGE NOTE:
+         * This is how a message is sent via XMPP
+         */
         Message message = new Message(to, Message.Type.chat);
         message.setBody(gson.toJson(strokeEvent));
-        BusProvider.getmBus().post(new SendMessageCommand(message));
+        BusProvider.getBus().post(new SendMessageCommand(message));
     }
 }
