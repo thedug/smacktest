@@ -16,15 +16,15 @@ public class OutstandingCheckTask implements  Runnable {
 
     private static final String TAG = OutstandingCheckTask.class.getSimpleName();
 
-    private final WeakReference<ICommandContext> weakCommandContext;
+    private final WeakReference<IXMPPContext> weakCommandContext;
 
-    public OutstandingCheckTask(ICommandContext ctx) {
-        weakCommandContext = new WeakReference<ICommandContext>(ctx);
+    public OutstandingCheckTask(IXMPPContext ctx) {
+        weakCommandContext = new WeakReference<IXMPPContext>(ctx);
     }
 
     @Override
     public void run() {
-        ICommandContext ctx = weakCommandContext.get();
+        IXMPPContext ctx = weakCommandContext.get();
         if( ctx != null ){
             Log.i(TAG, "checking out standing commands");
             Iterator<Map.Entry<String, XMPPCommand>> iter = ctx.getOutStandingCommands().entrySet().iterator();

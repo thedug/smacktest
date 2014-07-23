@@ -9,32 +9,22 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
-import android.util.Log;
 
 import com.famigo.rawsmacktest.app.BusProvider;
 import com.famigo.rawsmacktest.app.MainActivity;
 import com.famigo.rawsmacktest.app.R;
-import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
 import com.famigo.rawsmacktest.app.xmpp.event.XMPPStatusEvent;
 import com.famigo.rawsmacktest.app.xmpp.packet_handler.ChatMessageHandler;
 import com.squareup.otto.Subscribe;
 
 import org.jivesoftware.smack.ConnectionListener;
-import org.jivesoftware.smack.PacketListener;
-import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.filter.MessageTypeFilter;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
 import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +35,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * Created by adam.fitzgerald on 7/21/14.
  */
-public class XMPPService extends Service implements ConnectionListener,  ICommandContext, ReceiptReceivedListener {
+public class XMPPService extends Service implements ConnectionListener, IXMPPContext, ReceiptReceivedListener {
 
     private static final String USER = "luser";
     private static final String PASS = "passwd";

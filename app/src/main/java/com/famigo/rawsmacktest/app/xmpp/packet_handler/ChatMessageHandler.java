@@ -1,12 +1,10 @@
 package com.famigo.rawsmacktest.app.xmpp.packet_handler;
 
-import com.famigo.rawsmacktest.app.xmpp.ICommandContext;
+import com.famigo.rawsmacktest.app.xmpp.IXMPPContext;
 import com.famigo.rawsmacktest.app.xmpp.PacketHandler;
 import com.famigo.rawsmacktest.app.xmpp.XMPPEvent;
-import com.famigo.rawsmacktest.app.xmpp.XMPPService;
 import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
 
-import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.Message;
@@ -17,7 +15,7 @@ import org.jivesoftware.smack.packet.Packet;
  */
 public class ChatMessageHandler extends PacketHandler {
 
-    public ChatMessageHandler(ICommandContext context) {
+    public ChatMessageHandler(IXMPPContext context) {
         super(context);
     }
 

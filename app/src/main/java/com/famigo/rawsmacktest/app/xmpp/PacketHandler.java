@@ -12,12 +12,12 @@ import java.util.Collection;
  */
 public abstract class PacketHandler implements PacketListener {
 
-    protected ICommandContext ctx;
+    protected IXMPPContext ctx;
 
     public abstract PacketFilter getFilter();
     public abstract XMPPEvent handlePacket(Packet packet);
 
-    public PacketHandler(ICommandContext context) {
+    public PacketHandler(IXMPPContext context) {
         ctx = context;
     }
 

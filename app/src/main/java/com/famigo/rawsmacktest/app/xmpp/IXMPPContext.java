@@ -7,7 +7,7 @@ import java.util.Collection;
 /**
  * Created by adam.fitzgerald on 7/22/14.
  */
-public interface ICommandContext {
+public interface IXMPPContext {
 
     public XMPPConnection getActiveConnection();
     public void addOutstandingCommand( XMPPCommand command );
