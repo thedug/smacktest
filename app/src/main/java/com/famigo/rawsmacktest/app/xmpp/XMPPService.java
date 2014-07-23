@@ -16,6 +16,7 @@ import com.famigo.rawsmacktest.app.MainActivity;
 import com.famigo.rawsmacktest.app.R;
 import com.famigo.rawsmacktest.app.xmpp.event.IncommingMessage;
 import com.famigo.rawsmacktest.app.xmpp.event.XMPPStatusEvent;
+import com.famigo.rawsmacktest.app.xmpp.packet_handler.ChatMessageHandler;
 import com.squareup.otto.Subscribe;
 
 import org.jivesoftware.smack.ConnectionListener;
@@ -28,9 +29,12 @@ import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
 import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +45,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * Created by adam.fitzgerald on 7/21/14.
  */
-public class XMPPService extends Service implements ConnectionListener, PacketListener, ICommandContext, ReceiptReceivedListener {
+public class XMPPService extends Service implements ConnectionListener,  ICommandContext, ReceiptReceivedListener {
 
     private static final String USER = "luser";
     private static final String PASS = "passwd";
@@ -49,6 +53,8 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     private static final long CHECK_DELAY = 10000;
     private static final int MAX_HISTORY = 1000;
+
+    private final PacketHandler[] packetHandlers = {new ChatMessageHandler(this)};
 
     public static void start(Context ctx, String username, String password){
         ctx.startService(
@@ -121,6 +127,11 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     }
 
     @Override
+    public Collection<String> getServicedPackets() {
+        return servicedPackets;
+    }
+
+    @Override
     public void onCreate() {
         BusProvider.getBus().register(this);
         retryManager = new RetryManager(handler);
@@ -153,7 +164,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     @Override
     public void authenticated(XMPPConnection xmppConnection) {
         activeConnection = xmppConnection;
-        xmppConnection.addPacketListener(this, new MessageTypeFilter(Message.Type.chat));
+        attachPacketHandlers();
         postOnMain(XMPPStatusEvent.AUTHENTICATED);
 
         DeliveryReceiptManager.getInstanceFor(activeConnection).enableAutoReceipts();
@@ -161,9 +172,21 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     }
 
+    private void attachPacketHandlers() {
+        for ( PacketHandler ph: packetHandlers ) {
+            activeConnection.addPacketListener(ph, ph.getFilter());
+        }
+    }
+
+    private void detachPacketHandlers() {
+        for ( PacketHandler ph: packetHandlers ) {
+            activeConnection.removePacketListener(ph);
+        }
+    }
+
     @Override
     public void connectionClosed() {
-        activeConnection.removePacketListener(this);
+        detachPacketHandlers();
         activeConnection = null;
         postOnMain(XMPPStatusEvent.CONNECTION_CLOSED);
         this.stopSelf();
@@ -171,7 +194,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     @Override
     public void connectionClosedOnError(Exception e) {
-        activeConnection.removePacketListener(this);
+        detachPacketHandlers();
         activeConnection = null;
         postOnMain(XMPPStatusEvent.CONNECTION_CLOSED_ERROR);
     }
@@ -206,14 +229,6 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
                 BusProvider.getBus().post(event);
             }
         });
-    }
-
-    @Override
-    public void processPacket(Packet packet) throws SmackException.NotConnectedException {
-        if ( !servicedPackets.contains(packet.getPacketID())) {
-            servicedPackets.add(packet.getPacketID());
-            postOnMain(new IncommingMessage((Message) packet));
-        }
     }
 
     @Override
