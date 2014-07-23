@@ -14,6 +14,7 @@ import com.famigo.rawsmacktest.app.view.StrokeEvent;
 import com.famigo.rawsmacktest.app.xmpp.ConnectTask;
 import com.famigo.rawsmacktest.app.xmpp.RetryManager;
 import com.famigo.rawsmacktest.app.xmpp.command.RetryCommand;
+import com.famigo.rawsmacktest.app.xmpp.command.ShutdownCommand;
 import com.famigo.rawsmacktest.app.xmpp.event.FailedCommandEvent;
 import com.famigo.rawsmacktest.app.xmpp.XMPPCommand;
 import com.famigo.rawsmacktest.app.xmpp.XMPPService;
@@ -80,7 +81,7 @@ public class MainActivity extends Activity implements DrawView.OnStrokeEventList
     public boolean onOptionsItemSelected (MenuItem item){
            switch (item.getItemId()){
                case R.id.disconnect:
-                   stopService(new Intent(this, XMPPService.class));
+                   BusProvider.getBus().post(new ShutdownCommand());
                    return true;
            }
         return false;

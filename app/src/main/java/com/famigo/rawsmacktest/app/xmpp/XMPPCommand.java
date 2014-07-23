@@ -12,7 +12,6 @@ public abstract class XMPPCommand implements Runnable{
 
     private WeakReference<ICommandContext> weakCommandContext;
     public long expiration;
-    private String id;
 
     public abstract void executeCommand(XMPPConnection activeConnection);
     public abstract String getId();

@@ -2,6 +2,7 @@ package com.famigo.rawsmacktest.app.xmpp;
 
 import android.util.Log;
 
+import com.famigo.rawsmacktest.app.BuildConfig;
 import com.famigo.rawsmacktest.app.R;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -54,7 +55,7 @@ public class ConnectTask implements Runnable {
 
         ConnectionConfiguration configuration = new ConnectionConfiguration(HOST, PORT, VHOST);
         configuration.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
-        configuration.setDebuggerEnabled(true);
+        configuration.setDebuggerEnabled(BuildConfig.DEBUG);
         configuration.setReconnectionAllowed(true);
 
         XMPPConnection connection = new XMPPTCPConnection(configuration);
@@ -63,8 +64,6 @@ public class ConnectTask implements Runnable {
         try {
             connection.connect();
             connection.login(username, password);
-            Presence presence = new Presence(Presence.Type.available);
-            connection.sendPacket(presence);
 
         } catch ( Exception e ){
             Log.e(TAG, e.getMessage(), e);

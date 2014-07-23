@@ -67,6 +67,13 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
         }
     }));
 
+    private Runnable outStandingKickoffRunnable = new Runnable() {
+        @Override
+        public void run() {
+            executor.submit( new OutstandingCheckTask(XMPPService.this) );
+        }
+    };
+
     public static void start(Context ctx, String username, String password){
         ctx.startService(
                 new Intent(ctx, XMPPService.class)
@@ -111,12 +118,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
 
     @Override
     public void watchOutstandingCommands() {
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                executor.submit( new OutstandingCheckTask(XMPPService.this) );
-            }
-        }, CHECK_DELAY /2);
+        handler.postDelayed( outStandingKickoffRunnable, CHECK_DELAY /2);
     }
 
     @Override
@@ -130,15 +132,12 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
     @Override
     public void onDestroy() {
         BusProvider.getBus().unregister(this);
-        try {
-            activeConnection.disconnect();
-        } catch ( Exception e ){
-            Log.e(TAG, "cannot disconnect", e);
-        } finally {
-            BusProvider.getBus().post(XMPPStatusEvent.UNINITIALIZED);
-            super.onDestroy();
-        }
+        BusProvider.getBus().post(XMPPStatusEvent.UNINITIALIZED);
+
+        handler.removeCallbacks(outStandingKickoffRunnable);
         retryManager.shutdown();
+
+        super.onDestroy();
     }
 
     @Override
@@ -168,6 +167,7 @@ public class XMPPService extends Service implements ConnectionListener, PacketLi
         activeConnection.removePacketListener(this);
         activeConnection = null;
         postOnMain(XMPPStatusEvent.CONNECTION_CLOSED);
+        this.stopSelf();
     }
 
     @Override
